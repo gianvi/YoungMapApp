@@ -1,0 +1,131 @@
+<ion-modal-view>
+    <ion-header-bar class="bar-calm">
+
+        <h1 class="title">New Location</h1>
+
+        <div class="buttons">
+            <button class="button button-clear" ng-click="closeModal()">Cancel</button>
+        </div>
+
+    </ion-header-bar>
+
+    <ion-content class="padding">
+        <div class="btn-group">
+            <button class="btn" ng-class="{'btn-primary':wizard.isCurrentStep(0)}" ng-click="wizard.setCurrentStep(0)">Info</button>
+            <button class="btn" ng-class="{'btn-primary':wizard.isCurrentStep(1)}" ng-click="wizard.setCurrentStep(1)">Categories</button>
+            <button class="btn" ng-class="{'btn-primary':wizard.isCurrentStep(2)}" ng-click="wizard.setCurrentStep(2)">Tags</button>
+        </div>
+
+        <div>
+
+                    <div ng-switch="wizard.getCurrentStep()" class="slide-frame">
+
+                        <div ng-switch-when="one" class="wave">
+
+                            <label class="item item-input">
+                                <span class="input-label">Name</span>
+                                <input type="text" ng-model="wizard.dataForm.name" placeholder="What's Here?" ng-minlength="1" ng-maxlength="100" required>
+                            </label>
+
+                            <label class="item item-input">
+                                <span class="input-label">Description</span>
+                                <input type="text" name="description" ng-model="wizard.dataForm.description" placeholder="What's happen?" ng-minlength="5" ng-maxlength="150" required>
+                            </label>
+
+                            <label class="item item-input">
+                                <span class="input-label">Website</span>
+                                <input name="link_url" type="text" ng-model="wizard.dataForm.link_url" placeholder="Website link">
+                            </label>
+
+                            <div class="item tabs tabs-secondary tabs-icon-left">
+                                <a class="tab-item" href="#">
+                                    LAT : {{wizard.dataForm.lat | truncate:15}}
+                                </a>
+                                <a class="tab-item" href="#">
+                                    LNG : {{wizard.dataform.lng | truncate:15}}
+                                </a>
+                            </div>
+                        </div>
+
+
+
+
+
+
+                        <div ng-switch-when="two" class="wave">
+                                <ion-radio ng-repeat="item in categories"
+                                           ng-value="item.id"
+                                           ng-model="wizard.dataForm.categories[0]">
+                                    {{ item.name }}
+                                </ion-radio>
+                        </div>
+
+
+
+
+
+
+
+                        <div ng-switch-when="three" class="wave">
+
+                            <div>
+                                <tags-input ng-model="wizard.dataForm.tags"></tags-input>
+                            </div>
+                            <!--<div class="item tabs tabs-secondary tabs-icon-left" name="date" ng-model="formData.time"  required>
+                                <label class="tab-item" >
+                                    <span class="input-label">Start Date</span>
+                                    <input id="startdate" name="startdate" min="2015-01-01" max="2020-01-01" type="date" ng-model="wizard.dataform.time.startdate" placeholder="When's start?" >
+                                </label>
+                                <label class="tab-item" >
+                                    <span class="input-label">End Date</span>
+                                    <input id="enddate" name="enddate" min="2015-01-01" max="2020-01-01" type="date" ng-model="wizard.dataForm.time.enddate" placeholder="When's over?" >
+                                </label>
+                            </div>
+
+
+
+
+                            <label class="item item-input">
+                                <span class="input-label">Month</span>
+                                <input id="month" name="month" ng-model="wizard.dataform.time.month" placeholder="Month?"  type="month" >
+                            </label>
+
+                            <label class="item item-input">
+                                <span class="input-label">Week</span>
+                                <input id="week" name="week" type=week step=2 min=201-W30 ng-model="wizard.dataform.time.week" placeholder="Week?">
+                            </label>
+
+                            <label class="item item-input">
+                                <span class="input-label">Hours</span>
+                                <input id="hours" name="hours" type=time min=9:00 max=17:00 step=900 ng-model="wizard.dataform.time.hours" placeholder="Hours?">
+
+                            </label>-->
+
+
+                        </div>
+
+                    </div>
+
+                <!--<div>
+                        <pre>
+                            {{ wizard.dataForm | json }}
+                        </pre>
+                    </div>-->
+
+            </div>
+
+    </ion-content>
+
+    <ion-footer-bar class="bar-calm">
+        <div class="buttons" ng-click="wizard.handlePrevious()" ng-show="!wizard.isFirstStep()">
+            <button class="button" >Back</button>
+        </div>
+        <h1 class="title"></h1>
+        <div class="buttons" ng-click="wizard.handleNext()">
+            <button class="button" >{{wizard.getNextLabel()}}</button>
+        </div>
+    </ion-footer-bar>
+
+
+</ion-modal-view>
+

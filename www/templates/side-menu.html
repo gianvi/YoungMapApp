@@ -1,0 +1,44 @@
+<ion-side-menus enable-menu-with-back-views="false">
+  <ion-side-menu-content class="post-size-14px">
+    <ion-nav-bar class="bar-positive">
+      <ion-nav-back-button>
+      </ion-nav-back-button>
+      <ion-nav-buttons side="left">
+        <button class="button button-icon button-clear ion-navicon" menu-toggle="left">
+        </button>
+      </ion-nav-buttons>
+    </ion-nav-bar>
+    <ion-nav-view name="menuContent"></ion-nav-view>
+  </ion-side-menu-content>
+
+    <ion-side-menu side="left" ><!-- expose-aside-when="large" -->
+    <ion-content>
+      <ion-list>
+        <!-- TODO: ver si ponemos o no 'nav-clear' -->
+        <ion-item class="heading-item item item-avatar">
+            <img ng-src="http://www.jot.fm/issues/issue_2007_02/article1/images/boella.jpg">
+          <h2 class="greeting">Hi Dude</h2>
+          <p class="message">Welcome back</p>
+        </ion-item>
+          <ion-item class="item-icon-left" nav-clear menu-close href="#/app/maps">
+          <i class="icon ion-home"></i>
+          <h2 class="menu-text">Home</h2>
+        </ion-item>
+        <ion-item class="item-icon-left" nav-clear menu-close href="#/app/places-categories">
+          <i class="icon ion-radio-waves"></i>
+          <h2 class="menu-text">Categories</h2>
+        </ion-item>
+          <ion-item class="item-icon-left" nav-clear menu-close href="#/app/places">
+          <i class="icon ion-social-wordpress"></i>
+              <h2 class="menu-text">Places</h2>
+        </ion-item>
+
+        <ion-item class="item-icon-left" nav-clear menu-close href="#/app/settings">
+          <i class="icon ion-gear-a"></i>
+          <h2 class="menu-text">Settings</h2>
+        </ion-item>
+
+    </ion-list>
+    </ion-content>
+  </ion-side-menu>
+</ion-side-menus>

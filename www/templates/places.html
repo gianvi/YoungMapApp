@@ -1,0 +1,35 @@
+
+<ion-view>
+    <ion-nav-buttons side="left">
+        <button menu-toggle="left" class="button button-icon icon ion-navicon"></button>
+    </ion-nav-buttons>
+    <ion-nav-title>
+        <span>Places</span>
+    </ion-nav-title>
+
+
+        <ion-content >
+            <div id="search-bar">
+                <div class="item item-input-inset">
+                    <label class="item-input-wrapper" id="search-input">
+                        <i class="icon ion-search placeholder-icon"></i>
+                        <input id="searchInput" type="text" placeholder="Search" ng-model="query" autofocus>
+                    </label>
+                </div>
+            </div>
+
+            <ion-list>
+
+                <ion-item nav-clear menu-close ng-click="locate(locationKey)" ng-repeat="(locationKey,location) in locations | filter: query  track by location.id_wp">
+                    {{location.name}}
+                </ion-item>
+
+            </ion-list>
+
+        </ion-content>
+
+</ion-view>
+
+
+
+

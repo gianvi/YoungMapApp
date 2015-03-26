@@ -1,0 +1,30 @@
+<ion-view class="maps-view">
+  <ion-nav-title>
+    <span>Maps</span>
+  </ion-nav-title>
+  <ion-content scroll="false">
+    <div class="mapWrap"  data-tap-disabled="true">
+      <!--<div class="row center-map-action">
+        <div class="col">
+          <div class="list">
+            <div class="item item-input-inset">
+              <a class="button button-icon icon ion-pinpoint" ng-click="locate(null)"></a>
+              <label class="item-input-wrapper">
+                <input type="text" placeholder="My Location" disabled ng-model="my_location">
+              </label>
+            </div>
+          </div>
+        </div>
+      </div>-->
+
+        <leaflet id="mymap" defaults="map.defaults" center="map.center" width="100%" height="100%" controls="map.controls" markers="map.markers" ng-if="map"></leaflet>
+        <!--<div id="sidebar" class="sidebar collapsed">
+            sidebar content
+        </div>
+
+        <div id="mymap" class="sidebar-map"></div>-->
+
+
+    </div>
+  </ion-content>
+</ion-view>
