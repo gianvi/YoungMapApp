@@ -20,8 +20,13 @@
 
             <ion-list>
 
-                <ion-item nav-clear menu-close ng-click="locate(locationKey)" ng-repeat="(locationKey,location) in locations | filter: query  track by location.id_wp">
-                    {{location.name}}
+                <ion-item class="item item-icon-right" nav-clear menu-close ng-href="#/app/maps/{{location.id_wp}}" ng-repeat="(locationKey,location) in locations | filter: query  track by location.id_wp" >
+                    <!--<img class="thumbnail" ng-src="{{location.image}}"/>-->
+                    <div >
+                        <span class="title">{{location.name}}</span>
+                        <p class="description"><a ng-href="#/app/place-entries/{{location.id_wp}}">{{location.id_wp}}</a><span>{{location.geometries.coordinates[0]}}</span></p>
+                    </div>
+                    <i class="icon ion-arrow-right-c"></i>
                 </ion-item>
 
             </ion-list>

@@ -71,7 +71,7 @@ angular.module('your_app_name', ['ionic', 'angularMoment', 'your_app_name.contro
 
 
   .state('app.maps', {
-    url: "/maps",
+    url: "/maps/:centerPosition",
     views: {
       'menuContent': {
         templateUrl: "templates/maps.html",
@@ -110,6 +110,20 @@ angular.module('your_app_name', ['ionic', 'angularMoment', 'your_app_name.contro
       // authenticate: true
       authenticate: false
     }
+  })
+  
+  .state('app.place-entries', {
+      url: "/place-entries/:placeId",
+      views: {
+          'menuContent': {
+              templateUrl: "templates/place-entries.html",
+              controller: 'PlaceEntriesCtrl'
+          }
+      },
+      data: {
+          // authenticate: true
+          authenticate: false
+      }
   })
 
 

@@ -30,6 +30,12 @@ angular.module('your_app_name.factories', [])
                 console.log(response);
                 return place;
             });
+        },
+        getBBox: function(bbox){
+            var urlId = "http://vps129509.ovh.net/torinfony/api/v1/places.json";
+            return $http.get(urlId, bbox).then(function(response){
+                return response.data;
+            });
         }
     };
 

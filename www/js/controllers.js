@@ -92,8 +92,31 @@ angular.module('your_app_name.controllers', ['ngTagsInput'])
 	}
 })
 
-.controller('MapsCtrl', function($scope, $state, $ionicViewService, $ionicLoading, $ionicModal, leafletData, leafletEvents, placesFactory, categoriesFactory) {
+.controller('PlaceEntriesCtrl', function($scope, $stateParams, placesFactory, $q, $ionicLoading) {
 
+    $scope.placeId = $stateParams.placeId;
+    
+    var placeId = $stateParams.placeId;
+
+
+        placesFactory.get(placeId)
+        .success(function(place){
+            console.log("getPlaceEntries success: ");
+            $scope.place = angular.fromJson(place);
+            console.log($scope.place);
+        })
+        .error(function(error){
+            console.log("getPlaceEntries error");
+            console.log(error);
+        });
+
+    $scope.readMore = function(link){
+        window.open(link, '_blank', 'location=yes');
+    }
+})
+
+
+.controller('MapsCtrl', function($scope, $state, $stateParams, $ionicViewService, $ionicLoading, $ionicModal, leafletData, leafletEvents, placesFactory, categoriesFactory) {
 
     $scope.eventDetected = "No events yet...";
     var mapEvents = leafletEvents.getAvailableMapEvents();
@@ -104,6 +127,8 @@ angular.module('your_app_name.controllers', ['ngTagsInput'])
         });
     }
 
+    console.log($stateParams);
+    var center = parseInt($stateParams.centerPosition);
 
     /*
          * Create default map and load marker from API
@@ -116,6 +141,8 @@ angular.module('your_app_name.controllers', ['ngTagsInput'])
             console.log("no SCOPEmap!");
 
             $scope.my_location = "";
+            
+
             $scope.info_position = {
                 lat: 45.065943,
                 lng: 7.643738
@@ -140,8 +167,16 @@ angular.module('your_app_name.controllers', ['ngTagsInput'])
             }
 
             $scope.setControls();
-            $scope.loadMarkers();
-            $scope.locate($scope.info_position);
+
+            
+            if(!isNaN(center)){
+                $scope.loadMarker(center);
+                //$scope.locate(center);
+            }
+            else{
+                $scope.loadMarkers();
+                $scope.locate($scope.info_position);
+            }
             $scope.loadCategories();
 
         }
@@ -185,7 +220,7 @@ angular.module('your_app_name.controllers', ['ngTagsInput'])
         categoriesFactory.getAll()
         .success(function(cat){
             console.log("getCat success: ");
-            console.log(cat[0]);
+            //console.log(cat[0]);
             $scope.categories = angular.fromJson(cat);
         })
         .error(function(error){
@@ -201,24 +236,26 @@ angular.module('your_app_name.controllers', ['ngTagsInput'])
 
         $scope.locations = new Array();
 
+        leafletData.getMap().then(function(map){
+            var bounds = map.getBounds();
 
-        //qui andra la getBB
-        placesFactory.getAll()
-        .success(function(loc){
-            console.log("getLoc success: ");
-            for(var el in loc)
-                if(loc[el].geometries[0].coordinates.length)
-                    $scope.locations.push(angular.fromJson(loc[el]));
+            var bbox = {
+                ne_lat: bounds.getNorthEast().lat,
+                ne_lng: bounds.getNorthEast().lng,
+                sw_lng: bounds.getSouthWest().lng,
+                sw_lat: bounds.getSouthWest().lat   
+            }
 
-            //$scope.saveMarker($scope.locations.length-1);
-            $scope.saveMarkers();
-        })
-        .error(function(error){
-            console.log("getLoc error");
-            console.log(error);
+            placesFactory.getBBox(bbox)
+            .then(function(data){
+                console.log("getBBox success");
+                console.log(data);
+                for(var el in data)
+                    if(data[el].geometries[0].coordinates.length)
+                        $scope.locations.push(angular.fromJson(data[el]));
+                $scope.saveMarkers();
+            });
         });
-
-
     };
 
     /**
@@ -227,8 +264,8 @@ angular.module('your_app_name.controllers', ['ngTagsInput'])
     $scope.saveMarkers = function(){
         for(i=0; i<$scope.locations.length; i++)
             $scope.map.markers[parseInt($scope.locations[i].id_wp)] = {
-                lat: parseInt($scope.locations[i].geometries[0].coordinates[0]),
-                lng: parseInt($scope.locations[i].geometries[0].coordinates[1]),
+                lat: parseInt($scope.locations[i].geometries[0].coordinates[1]),
+                lng: parseInt($scope.locations[i].geometries[0].coordinates[0]),
                 message: $scope.locations[i].name,
                 focus: false,
                 draggable: false
@@ -236,20 +273,46 @@ angular.module('your_app_name.controllers', ['ngTagsInput'])
     }
 
 
+    
+    /**
+     *  Save place in locations from APIfactory
+     */
+    $scope.loadMarker = function(placeId){
+
+        $scope.locations = new Array();
+
+        placesFactory.get(placeId)
+        .success(function(place){
+            console.log("getPlaceEntries success: ");
+            $scope.locations.push(angular.fromJson(place));
+            $scope.map.markers[placeId] = {
+                    lat:place.geometries.coordinates[1],
+                    lng:place.geometries.coordinates[0],
+                    message: "From menu",
+                    focus: true,
+                    draggable: false
+            };
+        })
+        .error(function(error){
+            console.log("getPlaceEntries error");
+            console.log(error);
+        });
+
+    };
 
     /**
       * Center map on user's current position
       */
     $scope.locate = function(coord){
-        console.log(coord);
         $ionicLoading.show({
             template: 'Locating...'
         });
 
         //center on specific saved location by key (from menu)
         if(typeof(coord) === 'number'){
-            var location = $scope.locations[coord];
 
+            var location = $scope.map.markers[coord];
+                console.log(location);
             $scope.map.center  = {
                 lat : parseFloat(location.geometries[0].coordinates[0]),
                 lng : parseFloat(location.geometries[0].coordinates[1]),
@@ -293,14 +356,26 @@ angular.module('your_app_name.controllers', ['ngTagsInput'])
        * Detect user long-pressing on map to add new location
        */
     $scope.$on('leafletDirectiveMap.contextmenu', function(event, locationEvent){
+        $scope.map.markers.now={
+            lat: locationEvent.leafletEvent.latlng.lat,
+            lng: locationEvent.leafletEvent.latlng.lng,
+            message: "<div><a class='item item-icon-right' href='#/app/place-entry'>Drag & Complete Wizard</a></div>",
+            focus: true,
+            draggable: true
+        };
+
+    });
+    
+    
+    $scope.$on('leafletDirectiveMarker.dragend', function(event, markerEvent){
         $scope.wizard.dataForm = {
             type: 1,
             geometries: [
                 {
                     type: "Point",
                     coordinates: [
-                        locationEvent.leafletEvent.latlng.lat,
-                        locationEvent.leafletEvent.latlng.lng
+                        markerEvent.leafletEvent.target._latlng.lat,
+                        markerEvent.leafletEvent.target._latlng.lng
                     ]
                 }
             ],
@@ -313,10 +388,10 @@ angular.module('your_app_name.controllers', ['ngTagsInput'])
             description: null,
             link_url: null
         };
-
         $scope.openModal();
-
     });
+        
+
 
 
     $ionicModal.fromTemplateUrl('templates/form/wizard.html', {
@@ -333,6 +408,7 @@ angular.module('your_app_name.controllers', ['ngTagsInput'])
     }
 
     $scope.closeModal = function() {
+        $scope.map.markers.now = null;
         $scope.modal.hide();
     };
 
@@ -381,7 +457,7 @@ angular.module('your_app_name.controllers', ['ngTagsInput'])
     };
 
     $scope.wizard.dismiss = function(reason) {
-        console.log("dismisssss");;
+        console.log("wizard dismiss");;
     };
 
 
@@ -392,6 +468,7 @@ angular.module('your_app_name.controllers', ['ngTagsInput'])
             data.tags[el] = data.tags[el].text;
         }
         console.log(data);
+        console.log("processData");
         placesFactory.create(data);
     };
 
@@ -426,7 +503,7 @@ angular.module('your_app_name.controllers', ['ngTagsInput'])
         .success(function(cat){
             console.log("getCat success: ");
             $scope.categories = angular.fromJson(cat);
-            console.log($scope.categories[0]);
+            //console.log($scope.categories[0]);
         })
         .error(function(error){
             console.log("getCat error");
@@ -436,22 +513,30 @@ angular.module('your_app_name.controllers', ['ngTagsInput'])
 })
 
 // PLACES
-.controller('PlacesCtrl', function($scope, placesFactory) {
+.controller('PlacesCtrl', function($scope, $state, placesFactory) {
     $scope.locations = [];
 
-    //qui andra la getBB
+    //tutti i places (mentre in map carica solo da BBox)
     placesFactory.getAll()
     .success(function(loc){
         console.log("getLoc success: ");
         for(var el in loc)
             if(loc[el].geometries[0].coordinates.length)
                 $scope.locations.push(angular.fromJson(loc[el]));
-        console.log($scope.locations[0]);
+        //console.log($scope.locations[0]);
     })
     .error(function(error){
         console.log("getLoc error");
         console.log(error);
     });
+    
+    $scope.goTo = function(placeIndex){
+        //center on specific saved location by key (from menu)
+        //if(typeof(coord) === 'number'){
+            //console.log("COORD DA CENTRARE"+coord);
+            //$state.go('app.maps', {centerPosition: placeIndex});
+        //}
+    }
 
 
 })
