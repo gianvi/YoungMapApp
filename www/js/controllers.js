@@ -262,14 +262,15 @@ angular.module('your_app_name.controllers', ['ngTagsInput'])
      *  Save markers loaded in locations
      */
     $scope.saveMarkers = function(){
-        for(i=0; i<$scope.locations.length; i++)
+        for(i=0; i<$scope.locations.length; i++){
             $scope.map.markers[parseInt($scope.locations[i].id_wp)] = {
-                lat: parseInt($scope.locations[i].geometries[0].coordinates[1]),
-                lng: parseInt($scope.locations[i].geometries[0].coordinates[0]),
+                lat: parseFloat($scope.locations[i].geometries[0].coordinates[1]),
+                lng: parseFloat($scope.locations[i].geometries[0].coordinates[0]),
                 message: $scope.locations[i].name,
                 focus: false,
                 draggable: false
             };
+        }
     }
 
 
