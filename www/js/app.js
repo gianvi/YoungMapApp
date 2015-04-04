@@ -8,7 +8,7 @@ angular.module('underscore', [])
 // angular.module is a global place for creating, registering and retrieving Angular modules
 // 'starter' is the name of this angular module example (also set in a <body> attribute in index.html)
 // the 2nd parameter is an array of 'requires'
-angular.module('your_app_name', ['ionic', 'angularMoment', 'your_app_name.controllers', 'your_app_name.directives', 'your_app_name.filters', 'your_app_name.services', 'your_app_name.factories', 'underscore', 'ngMap', 'leaflet-directive', 'ngResource', 'ngCordova', 'templates', 'slugifier'])
+angular.module('your_app_name', ['ionic', 'angularMoment', 'your_app_name.controllers', 'your_app_name.directives', 'your_app_name.filters', 'your_app_name.services', 'your_app_name.factories', 'underscore', 'ngMap', 'leaflet-directive', 'ngResource', 'ngCordova', 'templates', 'slugifier', 'ngTagsInput'])
 
 .run(function($ionicPlatform) {
   $ionicPlatform.ready(function() {
@@ -23,7 +23,11 @@ angular.module('your_app_name', ['ionic', 'angularMoment', 'your_app_name.contro
   });
 })
 
-.config(function($stateProvider, $urlRouterProvider) {
+.config(function($stateProvider, $urlRouterProvider, $httpProvider) {
+    
+    $httpProvider.defaults.useXDomain = true; 
+    delete $httpProvider.defaults.headers.common['X-Requested-With'];
+    
   $stateProvider
 
   .state('walkthrough', {
@@ -123,7 +127,12 @@ angular.module('your_app_name', ['ionic', 'angularMoment', 'your_app_name.contro
       data: {
           // authenticate: true
           authenticate: false
-      }
+      }/*,
+      resolve: {
+        place: function(placesFactory){
+                    return placesFactory.get(placeId);
+        }
+      }*/
   })
 
 

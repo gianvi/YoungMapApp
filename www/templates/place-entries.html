@@ -2,7 +2,7 @@
 
 <ion-view class="feed-entries-view">
     <ion-nav-title>
-        <span>Place</span>
+        <span>Place - {{placeId}}</span>
     </ion-nav-title>
     <ion-content>
         <!-- Refresh to get the new posts -->
@@ -11,7 +11,7 @@
 
         <div class="entries-list">
             <div class="entry-heading item item-text-wrap">
-                <h2 class="entry-title">{{placeId}}</h2>
+                <h2 class="entry-title">{{place.message}}</h2>
                 <p class="entry-author">
                     Published <span am-time-ago="entry.publishedDate">Date</span>
                 </p>

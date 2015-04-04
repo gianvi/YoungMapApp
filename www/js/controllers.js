@@ -93,22 +93,30 @@ angular.module('your_app_name.controllers', ['ngTagsInput'])
 })
 
 .controller('PlaceEntriesCtrl', function($scope, $stateParams, placesFactory, $q, $ionicLoading) {
-
-    $scope.placeId = $stateParams.placeId;
+    var placeId = $stateParams.placeId
+    $scope.place = null;
     
-    var placeId = $stateParams.placeId;
-
+    //$scope.$on("$viewContentLoading", function(){
+        $scope.placeId = $stateParams.placeId;
 
         placesFactory.get(placeId)
-        .success(function(place){
-            console.log("getPlaceEntries success: ");
-            $scope.place = angular.fromJson(place);
-            console.log($scope.place);
-        })
-        .error(function(error){
-            console.log("getPlaceEntries error");
-            console.log(error);
-        });
+        .then(
+            function(place){
+                console.log("getPlaceEntries success: ");
+                $scope.place = angular.fromJson(place);
+                console.log($scope.place.message);
+            },
+            function(error){
+                console.log("getPlaceEntries error");
+                console.log(error);
+            });
+    //}); 
+    
+    
+    
+
+
+
 
     $scope.readMore = function(link){
         window.open(link, '_blank', 'location=yes');
@@ -126,28 +134,36 @@ angular.module('your_app_name.controllers', ['ngTagsInput'])
             $scope.eventDetected = event.name;
         });
     }
-
-    console.log($stateParams);
+    $scope.events = {
+        markers: {
+            enable: leafletEvents.getAvailableMarkerEvents(),
+        }
+    };
+    var markerEvents = leafletEvents.getAvailableMarkerEvents();
+    for (var k in markerEvents){
+        var eventName = 'leafletDirectiveMarker.' + markerEvents[k];
+        $scope.$on(eventName, function(event, args){
+            $scope.eventDetected = event.name;
+        });
+    }
+    
+    
+    console.log("MapStateParam: ", $stateParams);
     var center = parseInt($stateParams.centerPosition);
 
     /*
-         * Create default map and load marker from API
-         */
-
+     * Create default map with markers and categories loaded from API
+     */
     $scope.$on("$stateChangeSuccess", function() {
 
         //$ionicViewService.clearHistory();
         if(!$scope.map){
-            console.log("no SCOPEmap!");
-
             $scope.my_location = "";
-            
 
             $scope.info_position = {
-                lat: 45.065943,
-                lng: 7.643738
+                lat: 45.071025,
+                lng: 7.699056
             };
-
 
             $scope.map = {
                 defaults : {
@@ -165,77 +181,97 @@ angular.module('your_app_name.controllers', ['ngTagsInput'])
                     }
                 }
             }
-
-            $scope.setControls();
-
             
+            $scope.setControls();
+            $scope.setBaseLayers();
+
+            //se cè un marker-center dal menu places
+            //caricalo e centra, setta il suo layer unico visibile e poi fai la bbox
             if(!isNaN(center)){
                 $scope.loadMarker(center);
-                //$scope.locate(center);
+                $scope.updateCategories(center.category);
+                $scope.updateMarkers();
             }
+            
+            //se è un caricamento mappa normale
+            //centra su torino, setta tutti i layer visibili e poi fai la bbox 
             else{
-                $scope.loadMarkers();
                 $scope.locate($scope.info_position);
-            }
-            $scope.loadCategories();
+                $scope.updateCategories();
+                $scope.updateMarkers();
 
+            }
         }
 
     });
 
+    $scope.setBaseLayers = function() {
+        $scope.map.layers = {
+            baselayers: {
+                openStreetMap: {
+                    name: 'OpenStreetMap',
+                    type: 'xyz',
+                    url: 'http://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png'
+                },
+                toner: {
+                    name: 'Toner',
+                    type: 'xyz',
+                    url: 'https://stamen-tiles-{s}.a.ssl.fastly.net/toner/{z}/{x}/{y}.png'
+                },
+                watercolor: {
+                    name: 'Watercolor',
+                    type: 'xyz',
+                    url: 'http://tile.stamen.com/watercolor/{z}/{x}/{y}.jpg'
+                }
+            },
+            overlays: {}
+        }
+    };
+
+    $scope.setCategoriesOverlays = function(){
+        for(el in $scope.categories)
+            $scope.map.layers.overlays[$scope.categories[el].id] = {
+                name: $scope.categories[el].name,
+                type: "markercluster",
+                visible: true 
+            }
+    };
+
+
     $scope.setControls = function(){
         leafletData.getMap('mymap').then(function(map) {
             map.addControl( new L.Control.Search({
-                    url: 'http://nominatim.openstreetmap.org/search?format=json&q={s}',
-                    jsonpParam: 'json_callback',
-                    propertyName: 'display_name',
-                    propertyLoc: ['lat','lon'],
-                    circleLocation: false,
-                    markerLocation: true,
-                    markerClass: L.marker,
-                    autoType: false,
-                    autoCollapse: true,
-                    minLength: 2,
-                    zoom:12
-                })
-            );
+                url: 'http://nominatim.openstreetmap.org/search?format=json&q={s}',
+                jsonpParam: 'json_callback',
+                propertyName: 'display_name',
+                propertyLoc: ['lat','lon'],
+                circleLocation: false,
+                markerLocation: true,
+                markerClass: L.marker,
+                autoType: false,
+                autoCollapse: true,
+                minLength: 2,
+                zoom:12
+            }) 
+                          );
             map.addControl(new L.control.locate({
-                    zoom: 12,
-                    metric: true,
-                    keepCurrentZoomLevel: true,
-                    markerClass:L.marker,
-                    showPopup: true,
-                    strings: {
-                        title: "Show me where I am",
-                        popup: "You are within {distance} {unit} from this point",
-                        outsideMapBoundsMsg: "You seem located outside the boundaries of the map"
-                    },
-                })
+                zoom: 12, 
+                metric: true,
+                keepCurrentZoomLevel: true,
+                markerClass:L.marker,     
+                showPopup: true, 
+                strings: {
+                    title: "Show me where I am",  
+                    popup: "You are within {distance} {unit} from this point",  
+                    outsideMapBoundsMsg: "You seem located outside the boundaries of the map" 
+                },
+            })
             );
         });
-
-    }
-
-    $scope.loadCategories = function(){
-        categoriesFactory.getAll()
-        .success(function(cat){
-            console.log("getCat success: ");
-            //console.log(cat[0]);
-            $scope.categories = angular.fromJson(cat);
-        })
-        .error(function(error){
-            console.log("getCat error");
-            console.log(error);
-        });
-    }
-
-    /**
-     *  Save place in locations from APIfactory
-     */
-    $scope.loadMarkers = function(){
-
-        $scope.locations = new Array();
-
+    };
+    
+    
+    $scope.updateMarkers = function() {
         leafletData.getMap().then(function(map){
             var bounds = map.getBounds();
 
@@ -243,61 +279,52 @@ angular.module('your_app_name.controllers', ['ngTagsInput'])
                 ne_lat: bounds.getNorthEast().lat,
                 ne_lng: bounds.getNorthEast().lng,
                 sw_lng: bounds.getSouthWest().lng,
-                sw_lat: bounds.getSouthWest().lat   
+                sw_lat: bounds.getSouthWest().lat,
+                limit: 3
             }
 
             placesFactory.getBBox(bbox)
-            .then(function(data){
-                console.log("getBBox success");
-                console.log(data);
-                for(var el in data)
-                    if(data[el].geometries[0].coordinates.length)
-                        $scope.locations.push(angular.fromJson(data[el]));
-                $scope.saveMarkers();
+            .then(
+            function(markers) {
+                $scope.map.markers = markers;
+            },
+            function(error) {
+                console.log("Failed to get all markers, result is " + error); 
             });
         });
     };
+    
+    $scope.updateCategories = function() {
+        categoriesFactory.getAll()
+        .then(
+            /* success function */
+            function(categories) {
+                $scope.categories = categories;
+                $scope.setCategoriesOverlays();
+            },
+            /* error function */
+            function(error) {
+                console.log("Failed to get all categories, result is " + error); 
+            });
+    };
 
-    /**
-     *  Save markers loaded in locations
-     */
-    $scope.saveMarkers = function(){
-        for(i=0; i<$scope.locations.length; i++){
-            $scope.map.markers[parseInt($scope.locations[i].id_wp)] = {
-                lat: parseFloat($scope.locations[i].geometries[0].coordinates[1]),
-                lng: parseFloat($scope.locations[i].geometries[0].coordinates[0]),
-                message: $scope.locations[i].name,
-                focus: false,
-                draggable: false
-            };
-        }
-    }
 
 
     
     /**
-     *  Save place in locations from APIfactory
+     *  From place menu
      */
     $scope.loadMarker = function(placeId){
-
-        $scope.locations = new Array();
-
         placesFactory.get(placeId)
-        .success(function(place){
-            console.log("getPlaceEntries success: ");
-            $scope.locations.push(angular.fromJson(place));
-            $scope.map.markers[placeId] = {
-                    lat:place.geometries.coordinates[1],
-                    lng:place.geometries.coordinates[0],
-                    message: "From menu",
-                    focus: true,
-                    draggable: false
-            };
-        })
-        .error(function(error){
-            console.log("getPlaceEntries error");
-            console.log(error);
-        });
+        .then(
+            /* success function */
+            function(marker) {
+                $scope.map.markers[placeId] = marker;
+            },
+            /* error function */
+            function(error) {
+                console.log("Failed to get required marker, result is " + error); 
+            });
 
     };
 
@@ -313,7 +340,6 @@ angular.module('your_app_name.controllers', ['ngTagsInput'])
         if(typeof(coord) === 'number'){
 
             var location = $scope.map.markers[coord];
-                console.log(location);
             $scope.map.center  = {
                 lat : parseFloat(location.geometries[0].coordinates[0]),
                 lng : parseFloat(location.geometries[0].coordinates[1]),
@@ -345,13 +371,20 @@ angular.module('your_app_name.controllers', ['ngTagsInput'])
         else {
             $scope.map.center.lat = coord.lat;
             $scope.map.center.lng = coord.lng;
-            $scope.map.center.zoom = 11;
+            $scope.map.center.zoom = 16;
         }
 
         $ionicLoading.hide();
 
     };
 
+    
+    //Click event handler
+    $scope.$on('leafletDirectiveMarker.click', function(event, args) {
+        var temp_marker = $scope.map.markers[args.markerName];
+        console.log('Marker clicked: ', temp_marker);
+        //$state.go('app.forms');
+    }); 
 
     /*
        * Detect user long-pressing on map to add new location
@@ -367,6 +400,14 @@ angular.module('your_app_name.controllers', ['ngTagsInput'])
 
     });
     
+    /**
+     *  Detect user bounding box changing
+     */
+    $scope.$on('leafletDirectiveMap.moveend', function(event, args){
+        leafletData.getMap().then(function(map){
+            var bounds = map.getBounds();         
+        });
+    });
     
     $scope.$on('leafletDirectiveMarker.dragend', function(event, markerEvent){
         $scope.wizard.dataForm = {
@@ -381,8 +422,8 @@ angular.module('your_app_name.controllers', ['ngTagsInput'])
                 }
             ],
             tags: [
-                { text: 'first' },
-                { text: 'life' }
+                {"text":"First"},
+                {"text":"Life"}
             ],
             categories: [],
             name: null,
@@ -391,18 +432,14 @@ angular.module('your_app_name.controllers', ['ngTagsInput'])
         };
         $scope.openModal();
     });
-        
-
-
+    
 
     $ionicModal.fromTemplateUrl('templates/form/wizard.html', {
         scope: $scope,
         animation: 'slide-in-up'
     }).then(function(modal){
-        console.log("modal success");
         $scope.modal = modal;
     });
-
 
     $scope.openModal = function() {
         $scope.modal.show()
@@ -458,13 +495,12 @@ angular.module('your_app_name.controllers', ['ngTagsInput'])
     };
 
     $scope.wizard.dismiss = function(reason) {
-        console.log("wizard dismiss");;
+        console.log("wizard dismiss");
     };
-
-
 
     // function to process the form
     $scope.processData = function(data) {
+        console.log(data);
         for(el in data.tags){
             data.tags[el] = data.tags[el].text;
         }
@@ -472,24 +508,6 @@ angular.module('your_app_name.controllers', ['ngTagsInput'])
         console.log("processData");
         placesFactory.create(data);
     };
-
-
-
-
-
-
-    /**
-     *  Detect user bounding box changing
-     */
-    $scope.$on('leafletDirectiveMap.moveend', function(event, args){
-        //$scope.newBbox = new BBox();
-        leafletData.getMap().then(function(map){
-
-            var bounds = map.getBounds();
-            //alert('northwest=' + bounds.getNorthWest().toString() + '\n&northeast=' + bounds.getNorthEast().toString() + '\n&southeast=' +                    bounds.getSouthEast().toString() + '\n&southwest=' + bounds.getSouthWest().toString());
-        });
-
-    });
 
 
 })
@@ -501,12 +519,13 @@ angular.module('your_app_name.controllers', ['ngTagsInput'])
 	$scope.categories = [];
 
     categoriesFactory.getAll()
-        .success(function(cat){
+        .then(
+        function(cat){
             console.log("getCat success: ");
             $scope.categories = angular.fromJson(cat);
             //console.log($scope.categories[0]);
-        })
-        .error(function(error){
+        },
+        function(error){
             console.log("getCat error");
             console.log(error);
         });
@@ -519,17 +538,18 @@ angular.module('your_app_name.controllers', ['ngTagsInput'])
 
     //tutti i places (mentre in map carica solo da BBox)
     placesFactory.getAll()
-    .success(function(loc){
-        console.log("getLoc success: ");
-        for(var el in loc)
-            if(loc[el].geometries[0].coordinates.length)
-                $scope.locations.push(angular.fromJson(loc[el]));
-        //console.log($scope.locations[0]);
-    })
-    .error(function(error){
-        console.log("getLoc error");
-        console.log(error);
-    });
+    .then(
+        function(loc){
+            console.log("getLoc success: ");
+            for(var el in loc)
+                if(loc[el].geometries[0].coordinates.length)
+                    $scope.locations.push(angular.fromJson(loc[el]));
+        },
+        function(error){
+            console.log("getLoc error");
+            console.log(error);
+        });
+
     
     $scope.goTo = function(placeIndex){
         //center on specific saved location by key (from menu)
